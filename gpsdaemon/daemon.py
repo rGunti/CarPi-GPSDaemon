@@ -3,35 +3,17 @@ CARPI GPS DAEMON
 (C) 2018, Raphael "rGunti" Guntersweiler
 Licensed under MIT
 """
+from datetime import datetime
 from logging import Logger
 from time import sleep
 
+from gpsdaemon.keys import *
 from daemoncommons.daemon import Daemon
 from daemoncommons.log import logger
 from daemoncommons.errors import CarPiExitException
-from redisdatabus.bus import BusWriter, TypedBusListener
+from redisdatabus.bus import BusWriter
 
 from gps3 import agps3
-
-
-KEY_BASE = 'carpi.gps.'
-
-
-def build_key(type, name):
-    global KEY_BASE
-    return "{}{}{}".format(type, KEY_BASE, name)
-
-
-KEY_LATITUDE = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "latitude")
-KEY_LONGITUDE = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "longitude")
-KEY_ALTITUDE = build_key(TypedBusListener.TYPE_PREFIX_INT, "altitude")
-KEY_SPEED = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "speed")
-KEY_SPEED_KMH = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "speed.kmh")
-KEY_SPEED_MPH = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "speed.mph")
-KEY_FIX_MODE = build_key(TypedBusListener.TYPE_PREFIX_STRING, "fixmode")
-KEY_TIMESTAMP = build_key(TypedBusListener.TYPE_PREFIX_STRING, "timestamp")
-KEY_CLIMB = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "climb")
-KEY_TRACK = build_key(TypedBusListener.TYPE_PREFIX_FLOAT, "track")
 
 
 class GpsdConnectionError(CarPiExitException):
@@ -75,9 +57,8 @@ class GpsDaemon(Daemon):
                 for d in sock:
                     if d:
                         strm.unpack(d)
-                        bus.publish(KEY_LATITUDE, strm.lat)
-                        bus.publish(KEY_LONGITUDE, strm.lon)
-                        bus.publish(KEY_TIMESTAMP, strm.time)
+                        di = self._build_messages(strm, d)
+                        self._send_dict(bus, di)
             except OSError:
                 if retries > 0:
                     log.error("Failed to fetch data from GPSD! Retrying %s more times", retries)
@@ -86,6 +67,34 @@ class GpsDaemon(Daemon):
                     raise GpsdConnectionError()
 
             sleep(5)
+
+    def _build_messages(self, strm: agps3.DataStream, raw: str) -> dict:
+        return {
+            KEY_RAW: raw,
+            KEY_FIX_MODE: self._get_float(strm.mode, 0),
+            KEY_LATITUDE: self._get_float(strm.lat, None),
+            KEY_LONGITUDE: self._get_float(strm.lon, None),
+            KEY_TIMESTAMP: strm.time,
+            KEY_SPEED: self._get_float(strm.speed),
+            KEY_SPEED_KMH: self._get_float(strm.speed) * 3.6,
+            KEY_SPEED_MPH: self._get_float(strm.speed) * 2.23694,
+            KEY_TRACK: self._get_float(strm.track),
+            KEY_CLIMB: self._get_float(strm.climb),
+            KEY_EPX: self._get_float(strm.epx),
+            KEY_EPY: self._get_float(strm.epy),
+            KEY_EPV: self._get_float(strm.epv),
+            KEY_EPD: self._get_float(strm.epd),
+            KEY_EPS: self._get_float(strm.eps),
+            KEY_EPC: self._get_float(strm.epc),
+            KEY_SYS_TIMESTAMP: datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        }
+
+    def _get_float(self, v: any, default: float=0):
+        return float(v) if v != 'n/a' else default
+
+    def _send_dict(self, bus: BusWriter, d: dict):
+        for key, value in d.items():
+            bus.publish(key, value)
 
     def shutdown(self):
         self._log.info("Shutting down %s...", self.name)
