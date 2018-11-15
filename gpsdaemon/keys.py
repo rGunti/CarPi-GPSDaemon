@@ -16,7 +16,7 @@ def build_key(type, name):
 # Raw GPS JSON String
 KEY_RAW = build_key(TypedBusListener.TYPE_PREFIX_STRING, "RAW")
 # Fix Mode (0=no mode, 1=no fix, 2=2D, 3=3D)
-KEY_FIX_MODE = build_key(TypedBusListener.TYPE_PREFIX_STRING, "fixmode")
+KEY_FIX_MODE = build_key(TypedBusListener.TYPE_PREFIX_INT, "fixmode")
 # GPS Timestamp (UTC)
 KEY_TIMESTAMP = build_key(TypedBusListener.TYPE_PREFIX_STRING, "timestamp")
 

@@ -71,7 +71,7 @@ class GpsDaemon(Daemon):
     def _build_messages(self, strm: agps3.DataStream, raw: str) -> dict:
         return {
             KEY_RAW: raw,
-            KEY_FIX_MODE: self._get_float(strm.mode, 0),
+            KEY_FIX_MODE: self._get_int(strm.mode, 0),
             KEY_LATITUDE: self._get_float(strm.lat, None),
             KEY_LONGITUDE: self._get_float(strm.lon, None),
             KEY_TIMESTAMP: strm.time,
@@ -88,6 +88,9 @@ class GpsDaemon(Daemon):
             KEY_EPC: self._get_float(strm.epc),
             KEY_SYS_TIMESTAMP: datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         }
+
+    def _get_int(self, v: any, default: int=0):
+        return int(v) if v != 'n/a' else default
 
     def _get_float(self, v: any, default: float=0):
         return float(v) if v != 'n/a' else default
