@@ -1,2 +1,4 @@
 wheel
+carpi-daemoncommons
 carpi-redisdatabus
+gps3
