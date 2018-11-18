@@ -10,7 +10,7 @@ with open('README.md', 'r') as f:
     long_description = f.read()
 
 setup(name='carpi-gpsdaemon',
-      version='0.1.0',
+      version='0.1.1',
       description='GPS daemon written in Python transmitting from GPSD to a Redis Data Bus',
       long_description=long_description,
       url='https://github.com/rGunti/CarPi-GPSDaemon',
@@ -26,7 +26,8 @@ setup(name='carpi-gpsdaemon',
       packages=['gpsdaemon'],
       install_requires=[
           'wheel',
-          'carpi-redisdatabus'
+          'carpi-redisdatabus',
+          'carpi-daemoncommons'
       ],
       zip_safe=False,
       include_package_data=True)
