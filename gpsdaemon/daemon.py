@@ -97,7 +97,7 @@ class GpsDaemon(Daemon):
 
     def _send_dict(self, bus: BusWriter, d: dict):
         for key, value in d.items():
-            bus.publish(key, value)
+            bus.publish(key, str(value))
 
     def shutdown(self):
         self._log.info("Shutting down %s...", self.name)
