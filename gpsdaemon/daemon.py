@@ -9,8 +9,8 @@ from time import sleep
 
 from gpsdaemon.keys import *
 from daemoncommons.daemon import Daemon
-from daemoncommons.log import logger
-from daemoncommons.errors import CarPiExitException
+from carpicommons.log import logger
+from carpicommons.errors import CarPiExitException
 from redisdatabus.bus import BusWriter
 
 from gps3 import agps3
